@@ -1,0 +1,538 @@
+/* App-level shell styles for src/App.tsx */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--iv-font, "Inter", system-ui, sans-serif);
+  background: var(--iv-canvas, #f4f6f5);
+  color: var(--iv-ink, #14201b);
+}
+
+.iv-app {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+/* ------------------------------------------------ sidebar */
+
+.iv-sidebar {
+  background: var(--iv-side-bg, #0c1512);
+  color: var(--iv-side-ink, #eaf3ee);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 14px 20px;
+  gap: 14px;
+  width: 260px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.iv-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 14px;
+  margin-bottom: 4px;
+  background: #ffffff;
+  border-radius: 14px;
+  flex: none;
+}
+
+.iv-brand-row__logo {
+  width: 100%;
+  max-width: 180px;
+  max-height: 64px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.iv-navgroup {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: none;
+}
+
+.iv-navgroup__label {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--iv-side-ink-2, #8fa89b);
+  padding: 6px 10px 4px;
+}
+
+.iv-navitem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--iv-side-ink-2, #8fa89b);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 520;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.iv-navitem:hover {
+  background: var(--iv-side-bg-2, #121e19);
+  color: var(--iv-side-ink, #eaf3ee);
+}
+
+.iv-navitem:focus-visible {
+  outline: 2px solid var(--iv-side-active, #16a35e);
+  outline-offset: 2px;
+}
+
+.iv-navitem.is-active {
+  background: var(--iv-side-active, #16a35e);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.iv-navitem__icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.iv-backdrop {
+  display: none;
+}
+
+/* ------------------------------------------------ main */
+
+.iv-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.iv-topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 68px;
+  padding: 10px clamp(16px, 2.4vw, 30px);
+  background: var(--iv-surface, #fff);
+  border-bottom: 1px solid var(--iv-line, #e7ebe9);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.iv-topbar__menu {
+  display: none;
+  background: none;
+  border: 1px solid var(--iv-line-strong, #d7dedb);
+  border-radius: var(--iv-r-sm, 8px);
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+  color: var(--iv-ink, #14201b);
+  flex: none;
+}
+
+.iv-topbar__title {
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.iv-topbar__search {
+  flex: 1 1 320px;
+  max-width: 520px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  background: var(--iv-surface-2, #f6f8f7);
+  border: 1px solid var(--iv-line, #e7ebe9);
+  border-radius: 999px;
+  padding: 0 16px;
+  color: var(--iv-ink-3, #8b9a92);
+}
+
+.iv-topbar__search:focus-within {
+  border-color: var(--iv-brand, #16a35e);
+  background: var(--iv-surface, #fff);
+}
+
+.iv-topbar__search svg {
+  flex: none;
+}
+
+.iv-topbar__search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: var(--iv-ink, #14201b);
+}
+
+.iv-topbar__search input::placeholder {
+  color: var(--iv-ink-3, #8b9a92);
+}
+
+.iv-topbar__spacer {
+  flex: 1;
+}
+
+.iv-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: none;
+}
+
+.iv-userchip {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(
+    --iv-brand-grad,
+    linear-gradient(135deg, #1dbf73, #0f9d5a)
+  );
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 650;
+  font-size: 14px;
+  border: none;
+  flex: none;
+}
+
+.iv-content {
+  flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+/* Profile button (avatar + name + role) */
+
+.iv-profilebtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px 4px 4px;
+  border-radius: 999px;
+  font: inherit;
+  color: inherit;
+  max-width: 240px;
+}
+
+.iv-profilebtn:hover {
+  background: var(--iv-surface-2, #f6f8f7);
+}
+
+.iv-profilebtn:focus-visible {
+  outline: 2px solid var(--iv-brand, #16a35e);
+  outline-offset: 2px;
+}
+
+.iv-profilebtn__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.25;
+  min-width: 0;
+  text-align: left;
+}
+
+.iv-profilebtn__text strong {
+  font-size: 14px;
+  font-weight: 650;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iv-profilebtn__text em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--iv-ink-2, #5a6b63);
+}
+
+.iv-profilebtn__chev {
+  display: inline-flex;
+  color: var(--iv-ink-3, #8b9a92);
+  flex: none;
+}
+
+/* ------------------------------------------------ responsive shell */
+
+@media (max-width: 1100px) {
+  .iv-topbar__title {
+    display: none;
+  }
+}
+
+@media (max-width: 880px) {
+  .iv-app {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .iv-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    height: 100%;
+    z-index: 200;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform 0.2s ease, visibility 0s linear 0.2s;
+  }
+
+  .iv-sidebar.is-open {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.2s ease, visibility 0s;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.35);
+  }
+
+  .iv-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 14, 11, 0.5);
+    z-index: 150;
+  }
+
+  .iv-topbar__menu {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 700px) {
+  .iv-profilebtn__text,
+  .iv-profilebtn__chev {
+    display: none;
+  }
+
+  .iv-topbar {
+    gap: 10px;
+  }
+
+  .iv-topbar__actions {
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iv-sidebar,
+  .iv-sidebar.is-open {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------ boot / sign in */
+
+.iv-boot {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--iv-canvas, #f4f6f5);
+  color: var(--iv-ink, #14201b);
+}
+
+.iv-signin {
+  width: min(360px, 90vw);
+  background: var(--iv-surface, #fff);
+  border: 1px solid var(--iv-line, #e7ebe9);
+  border-radius: var(--iv-r-lg, 16px);
+  padding: 30px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  box-shadow: var(
+    --iv-shadow,
+    0 8px 24px -14px rgba(20, 32, 27, 0.18)
+  );
+  text-align: center;
+}
+
+.iv-signin__logo {
+  width: 100%;
+  max-width: 220px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 6px;
+}
+
+.iv-signin h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 660;
+}
+
+.iv-signin > p {
+  margin: -6px 0 4px;
+  font-size: 13.5px;
+  color: var(--iv-ink-2, #5a6b63);
+}
+
+.iv-signin label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 560;
+  color: var(--iv-ink-2, #5a6b63);
+  text-align: left;
+}
+
+.iv-passwordfield {
+  position: relative;
+  display: flex;
+}
+
+.iv-passwordfield .iv-input {
+  flex: 1;
+  padding-right: 40px;
+}
+
+.iv-passwordfield__toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--iv-r-sm, 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iv-passwordfield__toggle:hover {
+  background: var(--iv-surface-2, #f6f8f7);
+}
+
+.iv-forgotlink {
+  align-self: flex-end;
+  margin-top: -6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--iv-brand-ink, #0f7d47);
+  font-size: 12.5px;
+  font-weight: 560;
+  padding: 0;
+}
+
+.iv-forgotlink:hover {
+  text-decoration: underline;
+}
+
+.iv-notice-inline {
+  background: var(--iv-working-soft, #e4f6ec);
+  color: var(--iv-working, #0f9d5a);
+  border-radius: var(--iv-r, 12px);
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+/* Topbar profile dropdown */
+
+.iv-profilemenu {
+  position: relative;
+}
+
+.iv-profilemenu__panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 210px;
+  background: var(--iv-surface, #fff);
+  border: 1px solid var(--iv-line, #e7ebe9);
+  border-radius: var(--iv-r-lg, 16px);
+  box-shadow: var(--iv-shadow);
+  padding: 8px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.iv-profilemenu__who {
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--iv-line, #e7ebe9);
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.iv-profilemenu__who strong {
+  font-size: 13.5px;
+}
+
+.iv-profilemenu__who span {
+  font-size: 11.5px;
+  color: var(--iv-ink-3, #8b9a92);
+}
+
+.iv-profilemenu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  font-size: 13.5px;
+  padding: 8px 10px;
+  border-radius: var(--iv-r-sm, 8px);
+  color: var(--iv-ink, #14201b);
+}
+
+.iv-profilemenu__item:hover {
+  background: var(--iv-surface-2, #f6f8f7);
+}
+
+.iv-profilemenu__item--danger {
+  color: var(--iv-danger, #d13b3b);
+}

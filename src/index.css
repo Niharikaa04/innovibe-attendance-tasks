@@ -1,0 +1,9 @@
+/* Global reset; App.css carries the sidebar-shell layout and
+   modules/innovibe/styles/innovibe.css carries the module's own styling. */
+:root {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+}
