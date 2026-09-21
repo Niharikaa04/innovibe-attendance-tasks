@@ -13,6 +13,7 @@ import {
   SettingsPage,
   OfficeDashboardSection,
   DashboardKpiRow,
+  LeavesPage,
   IvIcon,
   useInnoVibe,
 } from './modules/innovibe';
@@ -20,6 +21,13 @@ import type { IvIconName } from './modules/innovibe';
 
 import './modules/innovibe/styles/innovibe.css';
 import './App.css';
+
+// A password-reset email link opens the app with "type=recovery" in the URL.
+// This is read before the Supabase client starts, because it removes the
+// link's tokens from the address bar.
+const openedFromRecoveryLink =
+  typeof window !== 'undefined' &&
+  window.location.hash.includes('type=recovery');
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -32,6 +40,8 @@ type Page =
   | 'team-attendance'
   | 'my-tasks'
   | 'team-tasks'
+  | 'my-leaves'
+  | 'team-leaves'
   | 'notifications'
   | 'settings';
 
@@ -41,6 +51,8 @@ const PAGE_TITLE: Record<Page, string> = {
   'team-attendance': 'Team Attendance',
   'my-tasks': 'My Tasks',
   'team-tasks': 'Team Tasks',
+  'my-leaves': 'My Leaves',
+  'team-leaves': 'Team Leaves',
   notifications: 'Notifications',
   settings: 'Settings',
 };
@@ -61,15 +73,19 @@ function formatRole(role?: string | null): string {
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [recovering, setRecovering] = useState(openedFromRecoveryLink);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
+      if (!data.session) setRecovering(false);
       setCheckingSession(false);
     });
 
     const { data: sub } = supabase.auth.onAuthStateChange(
-      (_event, next) => {
+      (event, next) => {
+        if (event === 'PASSWORD_RECOVERY') setRecovering(true);
+        if (event === 'SIGNED_OUT') setRecovering(false);
         setSession(next);
       },
     );
@@ -88,6 +104,10 @@ function App() {
 
   if (!session) {
     return <SignIn onSignedIn={setSession} />;
+  }
+
+  if (recovering) {
+    return <SetNewPassword onDone={() => setRecovering(false)} />;
   }
 
   return (
@@ -257,6 +277,26 @@ function OfficeShell({
           )}
         </nav>
 
+        <nav className="iv-navgroup" aria-label="Leaves">
+          <span className="iv-navgroup__label">Leaves</span>
+
+          <NavItem
+            icon="clipboard"
+            label="My Leaves"
+            active={page === 'my-leaves'}
+            onClick={() => goTo('my-leaves')}
+          />
+
+          {isManager && (
+            <NavItem
+              icon="users"
+              label="Team Leaves"
+              active={page === 'team-leaves'}
+              onClick={() => goTo('team-leaves')}
+            />
+          )}
+        </nav>
+
         <nav className="iv-navgroup" aria-label="Communication">
           <span className="iv-navgroup__label">
             Communication
@@ -410,8 +450,9 @@ function OfficeShell({
                 )
               }
               onNewTask={openNewTask}
-              onOpenNotifications={() => goTo('notifications')}
-              onOpenSettings={() => goTo('settings')}
+              onOpenLeaves={() => goTo('my-leaves')}
+              onReviewLeaves={isManager ? () => goTo('team-leaves') : undefined}
+              
             />
           )}
 
@@ -442,6 +483,20 @@ function OfficeShell({
               key="team-tasks"
               initialAssignee="all"
               startWithNewTask={startNewTask}
+            />
+          )}
+
+          {page === 'my-leaves' && (
+            <LeavesPage
+              key="my-leaves"
+              initialTab="me"
+            />
+          )}
+
+          {page === 'team-leaves' && isManager && (
+            <LeavesPage
+              key="team-leaves"
+              initialTab="team"
             />
           )}
 
@@ -504,15 +559,16 @@ function DashboardHome({
   onOpenTasks,
   onNewTask,
   onOpenAttendance,
-  onOpenNotifications,
-  onOpenSettings,
+  onOpenLeaves,
+  onReviewLeaves,
 }: {
   firstName: string;
   onOpenTasks: () => void;
   onNewTask: () => void;
+  onOpenLeaves: () => void;
+  onReviewLeaves?: () => void;
   onOpenAttendance: () => void;
-  onOpenNotifications: () => void;
-  onOpenSettings: () => void;
+
 }) {
   // Keep the date card correct if the tab stays open past midnight.
   const [now, setNow] = useState(() => new Date());
@@ -576,10 +632,117 @@ function DashboardHome({
         onOpenAttendance={onOpenAttendance}
         onOpenTasks={onOpenTasks}
         onNewTask={onNewTask}
+        onOpenLeaves={onOpenLeaves}
+        onReviewLeaves={onReviewLeaves}
         onOpenTask={onOpenTasks}
-        onOpenNotifications={onOpenNotifications}
-        onOpenSettings={onOpenSettings}
       />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+function SetNewPassword({
+  onDone,
+}: {
+  onDone: () => void;
+}) {
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    if (password.length < 8) {
+      setError('Use at least 8 characters.');
+      return;
+    }
+
+    if (password !== confirm) {
+      setError('The two passwords do not match.');
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+
+    const { error: err } = await supabase.auth.updateUser({
+      password,
+    });
+
+    setBusy(false);
+
+    if (err) {
+      setError(err.message);
+      return;
+    }
+
+    // Remove the leftover reset link from the address bar.
+    window.history.replaceState(
+      null,
+      '',
+      window.location.pathname,
+    );
+
+    onDone();
+  };
+
+  return (
+    <div className="iv-boot">
+      <form className="iv-signin" onSubmit={submit}>
+        <img
+          src="/assets/logo.png"
+          alt="InnoVibe Care.EV"
+          className="iv-signin__logo"
+        />
+
+        <h1>Set a new password</h1>
+
+        <p>Choose a new password for your account.</p>
+
+        {error && (
+          <div className="iv-error">
+            <p>{error}</p>
+          </div>
+        )}
+
+        <label>
+          New password
+
+          <input
+            className="iv-input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+            required
+            autoFocus
+          />
+        </label>
+
+        <label>
+          Confirm new password
+
+          <input
+            className="iv-input"
+            type="password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            autoComplete="new-password"
+            required
+          />
+        </label>
+
+        <button
+          className="iv-btn iv-btn--primary iv-btn--lg"
+          type="submit"
+          disabled={busy}
+        >
+          {busy ? 'Saving…' : 'Save password'}
+        </button>
+      </form>
     </div>
   );
 }

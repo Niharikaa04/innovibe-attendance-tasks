@@ -109,6 +109,7 @@
   font: inherit; font-size: 13px; font-weight: 600; color: var(--iv-brand-ink);
 }
 .iv-dhead__link:hover { text-decoration: underline; }
+.iv-dhead__sub { margin: 2px 0 0; font-size: 12.5px; color: var(--iv-ink-2); }
 
 .iv-dbtn { width: 100%; margin-top: auto; padding: 11px 16px; }
 
@@ -237,3 +238,20 @@
 .iv-qa--blue   { background: var(--iv-badge-blue-bg);  color: var(--iv-badge-blue); }
 .iv-qa--purple { background: var(--iv-badge-purple-bg); color: var(--iv-badge-purple); }
 .iv-qa--grey   { background: var(--iv-absent-soft);    color: var(--iv-ink-2); }
+/* ------------------------------------------------------- card actions --- */
+/* Fixes the "Open tasksNew task" run-together bug: iv-widget-actions was
+   referenced in the widget markup but never defined, so the two buttons
+   had no gap/flex styling. Real buttons (not underlined text links) now
+   sit in a spaced row and wrap cleanly on narrow cards. */
+
+.iv-dactions {
+  display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; padding-top: 2px;
+}
+.iv-dactions .iv-btn { flex: 1 1 auto; white-space: nowrap; }
+
+/* Card-level warning border, mirrors .iv-card--warn for the new card class. */
+.iv-dcard--warn { border-color: color-mix(in srgb, var(--iv-late) 40%, var(--iv-line)); }
+
+/* Empty / skeleton states dropped into a iv-dcard need the same breathing
+   room as the rest of the card body. */
+.iv-dcard .iv-emptystate, .iv-dcard .iv-skeleton { padding: 4px 0; }

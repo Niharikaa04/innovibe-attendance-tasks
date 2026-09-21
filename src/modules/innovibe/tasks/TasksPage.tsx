@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Avatar,
   Badge,
@@ -34,9 +34,8 @@ export function TasksPage({
   startWithNewTask = false,
 }: {
   initialAssignee?: 'all' | 'me';
-  /** Open the "New task" form as soon as the page appears. */
   startWithNewTask?: boolean;
-} = {}) {
+}) {
   const { isManager, people } = useInnoVibe();
   const nameOf = useNameOf();
   const toast = useToast();
@@ -46,7 +45,7 @@ export function TasksPage({
   });
 
   const [view, setView] = useState<'board' | 'table'>('board');
-  const [formOpen, setFormOpen] = useState(startWithNewTask);
+  const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Task | null>(null);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
 
@@ -71,6 +70,12 @@ export function TasksPage({
     setEditing(null);
     setFormOpen(true);
   };
+
+  useEffect(() => {
+    if (startWithNewTask) {
+      openNew();
+    }
+  }, [startWithNewTask]);
 
   const openEdit = (id: string) => {
     setEditing(t.allTasks.find((x) => x.id === id) ?? null);

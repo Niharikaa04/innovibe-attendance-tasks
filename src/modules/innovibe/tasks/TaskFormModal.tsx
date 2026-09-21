@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Field, Modal } from '../ui/ui';
 import { useInnoVibe } from '../provider';
 import { readableError, useToast } from '../lib/toast';
@@ -34,11 +34,6 @@ export function TaskFormModal({
   const [busy, setBusy] = useState(false);
   const [titleError, setTitleError] = useState<string | null>(null);
 
-  // Blocks a second save while the first one is still running. A ref is
-  // used (not just `busy`) because it changes instantly, before React
-  // re-renders, so a fast double-click cannot create the task twice.
-  const submitting = useRef(false);
-
   useEffect(() => {
     if (!open) return;
     setTitleError(null);
@@ -60,8 +55,6 @@ export function TaskFormModal({
     setForm((f) => ({ ...f, [k]: v }));
 
   const submit = async () => {
-    if (submitting.current) return;
-
     if (!form.title.trim()) {
       setTitleError('Give the task a title so people know what to do.');
       return;
@@ -70,8 +63,6 @@ export function TaskFormModal({
       setTitleError('Pick at least one person to assign this to.');
       return;
     }
-
-    submitting.current = true;
     setBusy(true);
     try {
       if (editing) {
@@ -87,7 +78,6 @@ export function TaskFormModal({
     } catch (e) {
       toast.error(readableError(e));
     } finally {
-      submitting.current = false;
       setBusy(false);
     }
   };
@@ -101,7 +91,7 @@ export function TaskFormModal({
       footer={(
         <>
           <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary" loading={busy} disabled={busy} onClick={submit}>
+          <Button variant="primary" loading={busy} onClick={submit}>
             {editing ? 'Save changes' : 'Create task'}
           </Button>
         </>
@@ -181,11 +171,7 @@ export function TaskFormModal({
         <Field label="Status">
           <select className="iv-input" value={form.status}
                   onChange={(e) => set('status', e.target.value as TaskInput['status'])}>
-            {/* A brand-new task can't already be finished. Completing happens
-                on an existing task, so "Completed" is offered only when editing. */}
-            {TASK_STATUSES
-              .filter((s) => editing || s !== 'completed')
-              .map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
+            {TASK_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}
           </select>
         </Field>
 

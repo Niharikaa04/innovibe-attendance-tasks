@@ -5,18 +5,10 @@
 
 export const LOCALE = 'en-IN';
 
-/**
- * The office timezone. Keep this the same as the "timezone" value in the
- * iv_work_settings table (default Asia/Kolkata). The database decides "today"
- * for check-in and for the dashboard counts in that timezone, so the app must
- * agree with it even when a phone or laptop clock is set to another timezone.
- */
-export const OFFICE_TIMEZONE = 'Asia/Kolkata';
-
 export function formatClock(iso?: string | null): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleTimeString(LOCALE, {
-    hour: '2-digit', minute: '2-digit', hour12: true, timeZone: OFFICE_TIMEZONE,
+    hour: '2-digit', minute: '2-digit', hour12: true,
   });
 }
 
@@ -59,13 +51,10 @@ export function relativeTime(iso?: string | null): string {
   return formatDayShort(iso);
 }
 
-/** Today's date (YYYY-MM-DD) in the office timezone, not the device's. */
 export function todayISO(): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: OFFICE_TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit',
-  }).formatToParts(new Date());
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
-  return `${get('year')}-${get('month')}-${get('day')}`;
+  const d = new Date();
+  const off = d.getTimezoneOffset();
+  return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
 }
 
 export function monthRange(monthISO: string): { from: string; to: string } {
@@ -80,12 +69,14 @@ export function currentMonthISO(): string {
   return todayISO().slice(0, 7);
 }
 
-/** The last n office days, oldest first, ending today. */
 export function lastNDays(n: number): string[] {
-  const [y, m, d] = todayISO().split('-').map(Number);
   const out: string[] = [];
+  const base = new Date();
   for (let i = n - 1; i >= 0; i -= 1) {
-    out.push(new Date(Date.UTC(y, m - 1, d - i)).toISOString().slice(0, 10));
+    const d = new Date(base);
+    d.setDate(base.getDate() - i);
+    const off = d.getTimezoneOffset();
+    out.push(new Date(d.getTime() - off * 60000).toISOString().slice(0, 10));
   }
   return out;
 }

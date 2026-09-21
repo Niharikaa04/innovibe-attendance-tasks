@@ -126,6 +126,16 @@ export interface TaskInput {
   due_date?: string | null;
 }
 
+/**
+ * Used only when creating a task: carries one or more employee ids. The
+ * database still stores one row per assignee (a "task for 3 people" is 3
+ * independently trackable tasks, each with its own status) — this type
+ * exists so the create flow can submit them together from one form.
+ */
+export interface TaskCreateInput extends Omit<TaskInput, 'assigned_to'> {
+  assignees: string[];
+}
+
 export interface TaskComment {
   id: string;
   task_id: string;
@@ -187,6 +197,75 @@ export interface AppNotification {
   data: Record<string, unknown> | null;
   is_read: boolean;
   created_at: string;
+}
+
+// ---------------------------------------- Leaves ----------------------------------------
+
+export type LeaveType = 'sick' | 'casual' | 'earned' | 'unpaid';
+export type LeaveStatus =
+  | 'pending' | 'approved' | 'rejected' | 'cancellation_requested' | 'cancelled';
+
+export const LEAVE_TYPES: LeaveType[] = ['sick', 'casual', 'earned', 'unpaid'];
+
+export const LEAVE_TYPE_LABEL: Record<LeaveType, string> = {
+  sick: 'Sick leave',
+  casual: 'Casual leave',
+  earned: 'Earned leave',
+  unpaid: 'Unpaid leave',
+};
+
+export const LEAVE_STATUS_LABEL: Record<LeaveStatus, string> = {
+  pending: 'Pending',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  cancellation_requested: 'Cancellation requested',
+  cancelled: 'Cancelled',
+};
+
+export interface LeaveRequest {
+  id: string;
+  user_id: string;
+  leave_type: LeaveType;
+  start_date: string;   // YYYY-MM-DD
+  end_date: string;     // YYYY-MM-DD
+  days: number;
+  is_half_day: boolean;
+  reason: string | null;
+  status: LeaveStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+  cancel_requested_by: string | null;
+  cancel_requested_at: string | null;
+  cancel_reviewed_by: string | null;
+  cancel_reviewed_at: string | null;
+  cancel_review_note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LeaveApplyInput {
+  leave_type: LeaveType;
+  start_date: string;
+  end_date: string;
+  reason?: string | null;
+  half_day?: boolean;
+}
+
+export interface LeaveBalanceRow {
+  leave_type: LeaveType;
+  annual_days: number;
+  accrued_days: number;
+  carried_forward: number;
+  used_days: number;
+  pending_days: number;
+  remaining: number;
+}
+
+export interface LeaveOverview {
+  pending_count: number;
+  cancellation_requested_count: number;
+  on_leave_today: number;
 }
 
 // -------------------------------- Async state -------------------------------

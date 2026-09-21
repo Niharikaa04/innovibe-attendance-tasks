@@ -137,6 +137,7 @@
   box-shadow: var(--iv-shadow);
   display: flex; flex-direction: column; gap: 16px;
   font-family: var(--iv-font); color: var(--iv-ink);
+  min-width: 0;
 }
 .iv-card--pad { padding: clamp(14px, 1.6vw, 20px); }
 .iv-card--warn { border-color: color-mix(in srgb, var(--iv-late) 40%, var(--iv-line)); }
@@ -152,30 +153,19 @@
 /* ---------------------------------------------------------------- stats -- */
 
 .iv-statrow { display: grid; gap: 10px; }
+.iv-statrow--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .iv-statrow--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .iv-statrow--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .iv-statrow--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
 @media (max-width: 860px) {
-  .iv-statrow--4,
-  .iv-statrow--5 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  .iv-statrow--4, .iv-statrow--5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
 @media (max-width: 460px) {
-  .iv-statrow--3,
-  .iv-statrow--4,
-  .iv-statrow--5 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  .iv-statrow--3, .iv-statrow--4, .iv-statrow--5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
 @media (max-width: 340px) {
-  .iv-statrow--3,
-  .iv-statrow--4,
-  .iv-statrow--5 {
-    grid-template-columns: 1fr;
-  }
+  .iv-statrow--3, .iv-statrow--4, .iv-statrow--5 { grid-template-columns: 1fr; }
 }
 
 .iv-stat {
@@ -491,16 +481,8 @@
 }
 .iv-taskcard:hover { border-color: var(--iv-line-strong); background: var(--iv-surface-2); }
 .iv-taskcard h4 { margin: 0; font-size: 14px; font-weight: 570; line-height: 1.35; }
-.iv-taskcard p {
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--iv-ink-2);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+.iv-taskcard p { margin: 0; font-size: 12.5px; color: var(--iv-ink-2);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .iv-taskcard footer { display: flex; justify-content: space-between; align-items: center;
   gap: 8px; font-size: 12px; color: var(--iv-ink-2); }
 .iv-taskcard--low    { border-left-color: var(--iv-absent); }
