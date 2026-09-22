@@ -13,7 +13,7 @@ const TONE: Record<string, string> = {
   absent: 'absent', on_leave: 'neutral',
 };
 
-type StatusFilter = AttendanceStatus | 'all';
+type StatusFilter = AttendanceStatus | 'all' | 'late';
 
 export function TeamAttendanceBoard({
   onSelectPerson,
@@ -26,7 +26,8 @@ export function TeamAttendanceBoard({
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((r) => {
-      if (statusFilter !== 'all' && r.status !== statusFilter) return false;
+      if (statusFilter === 'late') { if (!r.is_late) return false; }
+      else if (statusFilter !== 'all' && r.status !== statusFilter) return false;
       if (q && !r.full_name.toLowerCase().includes(q)) return false;
       return true;
     });
@@ -59,11 +60,26 @@ export function TeamAttendanceBoard({
         {error && <ErrorState message={error} onRetry={reload} />}
 
         <div className="iv-statrow iv-statrow--5">
-          <StatTile label="On the clock" value={overview?.working ?? 0} tone="working" />
-          <StatTile label="Checked out" value={overview?.checked_out ?? 0} tone="out" />
-          <StatTile label="Not in" value={overview?.absent ?? 0} tone="absent" />
-          <StatTile label="Late arrivals" value={overview?.late_arrivals ?? 0} tone="late" />
-          <StatTile label="Team size" value={overview?.total_employees ?? 0} />
+          <button type="button" className="iv-stattile-btn" aria-pressed={statusFilter === 'working'}
+            title="Filter list to On the clock" onClick={() => setStatusFilter((f) => (f === 'working' ? 'all' : 'working'))}>
+            <StatTile label="On the clock" value={overview?.working ?? 0} tone="working" />
+          </button>
+          <button type="button" className="iv-stattile-btn" aria-pressed={statusFilter === 'checked_out'}
+            title="Filter list to Checked out" onClick={() => setStatusFilter((f) => (f === 'checked_out' ? 'all' : 'checked_out'))}>
+            <StatTile label="Checked out" value={overview?.checked_out ?? 0} tone="out" />
+          </button>
+          <button type="button" className="iv-stattile-btn" aria-pressed={statusFilter === 'not_checked_in'}
+            title="Filter list to Not in" onClick={() => setStatusFilter((f) => (f === 'not_checked_in' ? 'all' : 'not_checked_in'))}>
+            <StatTile label="Not in" value={overview?.absent ?? 0} tone="absent" />
+          </button>
+          <button type="button" className="iv-stattile-btn" aria-pressed={statusFilter === 'late'}
+            title="Filter list to Late arrivals" onClick={() => setStatusFilter((f) => (f === 'late' ? 'all' : 'late'))}>
+            <StatTile label="Late arrivals" value={overview?.late_arrivals ?? 0} tone="late" />
+          </button>
+          <button type="button" className="iv-stattile-btn" aria-pressed={statusFilter === 'all'}
+            title="Show everyone" onClick={() => setStatusFilter('all')}>
+            <StatTile label="Team size" value={overview?.total_employees ?? 0} />
+          </button>
         </div>
 
         <div className="iv-attendance-pct">
@@ -81,13 +97,13 @@ export function TeamAttendanceBoard({
         <div className="iv-filters">
           <Search value={query} onChange={setQuery} placeholder="Search a team member" />
           <div className="iv-segmented" role="group" aria-label="Filter by status">
-            {(['all', 'working', 'checked_out', 'not_checked_in'] as StatusFilter[]).map((s) => (
+            {(['all', 'working', 'checked_out', 'not_checked_in', 'late'] as StatusFilter[]).map((s) => (
               <button
                 key={s}
                 className={`iv-segmented__btn ${statusFilter === s ? 'is-active' : ''}`}
                 onClick={() => setStatusFilter(s)}
               >
-                {s === 'all' ? 'Everyone' : ATTENDANCE_LABEL[s as AttendanceStatus]}
+                {s === 'all' ? 'Everyone' : s === 'late' ? 'Late arrivals' : ATTENDANCE_LABEL[s as AttendanceStatus]}
               </button>
             ))}
           </div>

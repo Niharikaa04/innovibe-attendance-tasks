@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  BarChart, Badge, Card, EmptyState, ErrorState, SectionHead, SkeletonRows, StatTile,
+  BarChart, Badge, Button, Card, EmptyState, ErrorState, SectionHead, SkeletonRows, StatTile,
 } from '../ui/ui';
 import { useAttendanceHistory } from './hooks';
 import {
@@ -13,12 +13,21 @@ const TONE: Record<string, string> = {
   absent: 'absent', on_leave: 'neutral',
 };
 
+type HistoryFilter = 'all' | 'present' | 'late';
+
 export function AttendanceHistory({
   userId, personName,
 }: { userId: string | null; personName?: string }) {
   const [month, setMonth] = useState(currentMonthISO());
+  const [filter, setFilter] = useState<HistoryFilter>('all');
   const { from, to } = useMemo(() => monthRange(month), [month]);
   const { rows, summary, loading, error, reload } = useAttendanceHistory(userId, from, to);
+
+  const visibleRows = useMemo(() => {
+    if (filter === 'present') return rows.filter((r) => r.status === 'working' || r.status === 'checked_out');
+    if (filter === 'late') return rows.filter((r) => r.is_late);
+    return rows;
+  }, [rows, filter]);
 
   const chart = useMemo(
     () => [...rows].reverse().slice(-14).map((r) => ({
@@ -40,7 +49,7 @@ export function AttendanceHistory({
             type="month"
             value={month}
             max={currentMonthISO()}
-            onChange={(e) => setMonth(e.target.value)}
+            onChange={(e) => { setMonth(e.target.value); setFilter('all'); }}
             aria-label="Choose month"
           />
         )}
@@ -49,8 +58,24 @@ export function AttendanceHistory({
       {error && <ErrorState message={error} onRetry={reload} />}
 
       <div className="iv-statrow iv-statrow--4">
-        <StatTile label="Days present" value={summary.daysPresent} />
-        <StatTile label="Late arrivals" value={summary.daysLate} tone={summary.daysLate ? 'late' : 'neutral'} />
+        <button
+          type="button"
+          className="iv-stattile-btn"
+          aria-pressed={filter === 'present'}
+          title="Show only days present"
+          onClick={() => setFilter((f) => (f === 'present' ? 'all' : 'present'))}
+        >
+          <StatTile label="Days present" value={summary.daysPresent} />
+        </button>
+        <button
+          type="button"
+          className="iv-stattile-btn"
+          aria-pressed={filter === 'late'}
+          title="Show only late arrivals"
+          onClick={() => setFilter((f) => (f === 'late' ? 'all' : 'late'))}
+        >
+          <StatTile label="Late arrivals" value={summary.daysLate} tone={summary.daysLate ? 'late' : 'neutral'} />
+        </button>
         <StatTile label="Hours logged" value={formatDuration(summary.totalMinutes)} />
         <StatTile label="Daily average" value={formatDuration(summary.avgMinutes)} />
       </div>
@@ -62,13 +87,30 @@ export function AttendanceHistory({
         </div>
       )}
 
-      {loading ? <SkeletonRows rows={5} /> : rows.length === 0 ? (
+      {loading ? <SkeletonRows rows={5} /> : visibleRows.length === 0 ? (
         <EmptyState
-          title="No attendance recorded this month"
-          body="Records appear here as soon as someone checks in."
+          title={
+            rows.length === 0
+              ? 'No attendance recorded this month'
+              : filter === 'late' ? 'No late arrivals this month' : 'No matching records'
+          }
+          body={
+            rows.length === 0
+              ? 'Records appear here as soon as someone checks in.'
+              : 'Clear the filter to see every record this month.'
+          }
+          action={filter !== 'all' ? <Button size="sm" onClick={() => setFilter('all')}>Clear filter</Button> : undefined}
         />
       ) : (
         <div className="iv-tablewrap">
+          {filter !== 'all' && (
+            <div className="iv-filters">
+              <span className="iv-chartwrap__cap">
+                Showing {filter === 'present' ? 'days present' : 'late arrivals'} only · {visibleRows.length} record(s)
+              </span>
+              <Button size="sm" onClick={() => setFilter('all')}>Clear filter</Button>
+            </div>
+          )}
           <table className="iv-table">
             <thead>
               <tr>
@@ -76,7 +118,7 @@ export function AttendanceHistory({
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {visibleRows.map((r) => (
                 <tr key={r.id}>
                   <td data-label="Date">{formatDay(r.work_date)}</td>
                   <td data-label="Check in">
