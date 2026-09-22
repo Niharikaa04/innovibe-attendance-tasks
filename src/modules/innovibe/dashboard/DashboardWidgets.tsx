@@ -34,28 +34,41 @@ const TONE: Record<string, string> = {
 // reference dashboard (blue/green/cyan/orange rounded icon + big number).
 // ---------------------------------------------------------------------------
 export function KpiCard({
-  icon, tone, value, label, trend,
+  icon, tone, value, label, trend, onClick,
 }: {
   icon: string;
   tone: 'blue' | 'green' | 'cyan' | 'orange' | 'purple';
   value: ReactNode;
   label: string;
   trend?: string;
+  onClick?: () => void;
 }) {
-  return (
-    <div className="iv-dkpi">
+  const body = (
+    <>
       <span className={`iv-dkpi__icon iv-dkpi__icon--${tone}`} aria-hidden="true">{icon}</span>
       <div className="iv-dkpi__body">
         <div className="iv-dkpi__value">{value}</div>
         <div className="iv-dkpi__label">{label}</div>
         {trend && <span className="iv-dkpi__trend">{trend}</span>}
       </div>
-    </div>
+    </>
+  );
+  if (!onClick) return <div className="iv-dkpi">{body}</div>;
+  return (
+    <button type="button" className="iv-dkpi-btn" onClick={onClick} title={`Open ${label.toLowerCase()}`}>
+      <div className="iv-dkpi">{body}</div>
+    </button>
   );
 }
 
 /** The KPI row for the top of the dashboard — different cards for employees vs managers. */
-export function DashboardKpiRow() {
+export function DashboardKpiRow({
+  onOpenAttendance, onOpenTasks,
+}: {
+  /** filter hint passed straight through to the target page's own filter, when the caller supports it */
+  onOpenAttendance?: (filter?: 'all' | 'present' | 'absent') => void;
+  onOpenTasks?: (filter?: 'pending' | 'completed' | 'all') => void;
+} = {}) {
   const { isManager } = useInnoVibe();
   const { overview, loading: attLoading } = useTeamAttendance(todayISO());
   const { record: myRecord, loading: myAttLoading } = useMyAttendance();
@@ -76,11 +89,16 @@ export function DashboardKpiRow() {
   if (isManager) {
     return (
       <div className="iv-dkpirow iv-dkpirow--5">
-        <KpiCard icon="👥" tone="blue" value={overview?.total_employees ?? 0} label="Total employees" />
-        <KpiCard icon="🟢" tone="green" value={overview?.present ?? 0} label="Present today" />
-        <KpiCard icon="🔴" tone="orange" value={overview?.absent ?? 0} label="Absent today" />
-        <KpiCard icon="⏳" tone="cyan" value={counts.todo + counts.in_progress + counts.blocked} label="Pending tasks" />
-        <KpiCard icon="✅" tone="purple" value={counts.completed} label="Completed tasks" />
+        <KpiCard icon="👥" tone="blue" value={overview?.total_employees ?? 0} label="Total employees"
+          onClick={onOpenAttendance ? () => onOpenAttendance('all') : undefined} />
+        <KpiCard icon="🟢" tone="green" value={overview?.present ?? 0} label="Present today"
+          onClick={onOpenAttendance ? () => onOpenAttendance('present') : undefined} />
+        <KpiCard icon="🔴" tone="orange" value={overview?.absent ?? 0} label="Absent today"
+          onClick={onOpenAttendance ? () => onOpenAttendance('absent') : undefined} />
+        <KpiCard icon="⏳" tone="cyan" value={counts.todo + counts.in_progress + counts.blocked} label="Pending tasks"
+          onClick={onOpenTasks ? () => onOpenTasks('pending') : undefined} />
+        <KpiCard icon="✅" tone="purple" value={counts.completed} label="Completed tasks"
+          onClick={onOpenTasks ? () => onOpenTasks('completed') : undefined} />
       </div>
     );
   }
@@ -95,16 +113,22 @@ export function DashboardKpiRow() {
         tone="green"
         value={ATTENDANCE_LABEL[myStatus]}
         label="Today's attendance"
+        onClick={onOpenAttendance ? () => onOpenAttendance() : undefined}
       />
-      <KpiCard icon="🕘" tone="blue" value={formatClock(myRecord?.check_in)} label="Check-in time" />
-      <KpiCard icon="🕕" tone="cyan" value={formatClock(myRecord?.check_out)} label="Check-out time" />
-      <KpiCard icon="📋" tone="orange" value={pending} label="My pending tasks" />
+      <KpiCard icon="🕘" tone="blue" value={formatClock(myRecord?.check_in)} label="Check-in time"
+        onClick={onOpenAttendance ? () => onOpenAttendance() : undefined} />
+      <KpiCard icon="🕕" tone="cyan" value={formatClock(myRecord?.check_out)} label="Check-out time"
+        onClick={onOpenAttendance ? () => onOpenAttendance() : undefined} />
+      <KpiCard icon="📋" tone="orange" value={pending} label="My pending tasks"
+        onClick={onOpenTasks ? () => onOpenTasks('pending') : undefined} />
     </div>
   );
 }
 
 
-export function AttendanceSummaryWidget({ onOpen }: { onOpen?: () => void }) {
+export function AttendanceSummaryWidget({
+  onOpen,
+}: { onOpen?: (filter?: 'working' | 'checked_out' | 'absent') => void }) {
   const { overview, loading, realtime } = useTeamAttendance(todayISO());
   return (
     <div className="iv-dcard">
@@ -114,28 +138,39 @@ export function AttendanceSummaryWidget({ onOpen }: { onOpen?: () => void }) {
       </div>
       {loading ? <SkeletonRows rows={2} /> : (
         <div className="iv-dtiles iv-dtiles--3">
-          <div className="iv-dtile iv-dtile--green">
-            <span className="iv-dtile__value">{overview?.working ?? 0}</span>
-            <span className="iv-dtile__label">Working</span>
-          </div>
-          <div className="iv-dtile iv-dtile--amber">
-            <span className="iv-dtile__value">{overview?.checked_out ?? 0}</span>
-            <span className="iv-dtile__label">Checked out</span>
-          </div>
-          <div className="iv-dtile iv-dtile--grey">
-            <span className="iv-dtile__value">{overview?.absent ?? 0}</span>
-            <span className="iv-dtile__label">Not in</span>
-          </div>
+          <button type="button" className="iv-dtile-btn" disabled={!onOpen}
+            title="Filter to working" onClick={() => onOpen?.('working')}>
+            <div className="iv-dtile iv-dtile--green">
+              <span className="iv-dtile__value">{overview?.working ?? 0}</span>
+              <span className="iv-dtile__label">Working</span>
+            </div>
+          </button>
+          <button type="button" className="iv-dtile-btn" disabled={!onOpen}
+            title="Filter to checked out" onClick={() => onOpen?.('checked_out')}>
+            <div className="iv-dtile iv-dtile--amber">
+              <span className="iv-dtile__value">{overview?.checked_out ?? 0}</span>
+              <span className="iv-dtile__label">Checked out</span>
+            </div>
+          </button>
+          <button type="button" className="iv-dtile-btn" disabled={!onOpen}
+            title="Filter to not in" onClick={() => onOpen?.('absent')}>
+            <div className="iv-dtile iv-dtile--grey">
+              <span className="iv-dtile__value">{overview?.absent ?? 0}</span>
+              <span className="iv-dtile__label">Not in</span>
+            </div>
+          </button>
         </div>
       )}
       {onOpen && (
-        <button className="iv-btn iv-dbtn" onClick={onOpen}>Open attendance</button>
+        <button className="iv-btn iv-dbtn" onClick={() => onOpen()}>Open attendance</button>
       )}
     </div>
   );
 }
 
-export function EmployeeStatusWidget({ max = 6 }: { max?: number }) {
+export function EmployeeStatusWidget({
+  max = 6, onSelectPerson,
+}: { max?: number; onSelectPerson?: (userId: string, name: string) => void }) {
   const { rows, loading, realtime } = useTeamAttendance(todayISO());
   return (
     <div className="iv-dcard">
@@ -146,7 +181,13 @@ export function EmployeeStatusWidget({ max = 6 }: { max?: number }) {
       {loading ? <SkeletonRows rows={4} /> : (
         <ul className="iv-dpeople">
           {rows.slice(0, max).map((r) => (
-            <li key={r.user_id}>
+            <li
+              key={r.user_id}
+              className={onSelectPerson ? 'is-clickable' : ''}
+              onClick={() => onSelectPerson?.(r.user_id, r.full_name)}
+              tabIndex={onSelectPerson ? 0 : -1}
+              onKeyDown={(e) => { if (e.key === 'Enter') onSelectPerson?.(r.user_id, r.full_name); }}
+            >
               <span className="iv-dpeople__name">
                 <Avatar name={r.full_name} url={r.avatar_url} size={28} />
                 <strong>{r.full_name}</strong>
@@ -167,7 +208,7 @@ export function TaskSummaryWidget({
   onOpen,
   onNewTask,
 }: {
-  onOpen?: () => void;
+  onOpen?: (filter?: TaskStatus | 'all') => void;
   onNewTask?: () => void;
 }) {
   const { counts, myCounts, loading, realtime } = useTasks();
@@ -181,26 +222,41 @@ export function TaskSummaryWidget({
       </div>
       {loading ? <SkeletonRows rows={2} /> : (
         <div className="iv-dtiles iv-dtiles--auto">
-          <div className="iv-dtile iv-dtile--blue">
-            <span className="iv-dtile__value">{c.total}</span>
-            <span className="iv-dtile__label">Total</span>
-          </div>
-          <div className="iv-dtile iv-dtile--grey">
-            <span className="iv-dtile__value">{c.todo}</span>
-            <span className="iv-dtile__label">To do</span>
-          </div>
-          <div className="iv-dtile iv-dtile--cyan">
-            <span className="iv-dtile__value">{c.in_progress}</span>
-            <span className="iv-dtile__label">In progress</span>
-          </div>
-          <div className="iv-dtile iv-dtile--red">
-            <span className="iv-dtile__value">{c.blocked}</span>
-            <span className="iv-dtile__label">Blocked</span>
-          </div>
-          <div className="iv-dtile iv-dtile--green">
-            <span className="iv-dtile__value">{c.completed}</span>
-            <span className="iv-dtile__label">Completed</span>
-          </div>
+          <button type="button" className="iv-dtile-btn" disabled={!onOpen}
+            title="Show all tasks" onClick={() => onOpen?.('all')}>
+            <div className="iv-dtile iv-dtile--blue">
+              <span className="iv-dtile__value">{c.total}</span>
+              <span className="iv-dtile__label">Total</span>
+            </div>
+          </button>
+          <button type="button" className="iv-dtile-btn" disabled={!onOpen}
+            title="Filter to To do" onClick={() => onOpen?.('todo')}>
+            <div className="iv-dtile iv-dtile--grey">
+              <span className="iv-dtile__value">{c.todo}</span>
+              <span className="iv-dtile__label">To do</span>
+            </div>
+          </button>
+          <button type="button" className="iv-dtile-btn" disabled={!onOpen}
+            title="Filter to In progress" onClick={() => onOpen?.('in_progress')}>
+            <div className="iv-dtile iv-dtile--cyan">
+              <span className="iv-dtile__value">{c.in_progress}</span>
+              <span className="iv-dtile__label">In progress</span>
+            </div>
+          </button>
+          <button type="button" className="iv-dtile-btn" disabled={!onOpen}
+            title="Filter to Blocked" onClick={() => onOpen?.('blocked')}>
+            <div className="iv-dtile iv-dtile--red">
+              <span className="iv-dtile__value">{c.blocked}</span>
+              <span className="iv-dtile__label">Blocked</span>
+            </div>
+          </button>
+          <button type="button" className="iv-dtile-btn" disabled={!onOpen}
+            title="Filter to Completed" onClick={() => onOpen?.('completed')}>
+            <div className="iv-dtile iv-dtile--green">
+              <span className="iv-dtile__value">{c.completed}</span>
+              <span className="iv-dtile__label">Completed</span>
+            </div>
+          </button>
         </div>
       )}
       {/* Two distinct buttons with real spacing — this is the fix for the
@@ -209,7 +265,7 @@ export function TaskSummaryWidget({
       {(onOpen || onNewTask) && (
         <div className="iv-dactions">
           {onOpen && (
-            <button className="iv-btn iv-btn--sm" onClick={onOpen}>
+            <button className="iv-btn iv-btn--sm" onClick={() => onOpen()}>
               Open tasks
             </button>
           )}
@@ -340,7 +396,9 @@ export function RecentActivityWidget({ limit = 8 }: { limit?: number }) {
   );
 }
 
-export function PendingLeavesWidget({ onOpen }: { onOpen?: () => void }) {
+export function PendingLeavesWidget({
+  onOpen,
+}: { onOpen?: (filter?: 'pending' | 'cancellations' | 'on_leave') => void }) {
   const { isManager } = useInnoVibe();
   const { overview, loading } = useTeamLeaves();
   if (!isManager) return null;
@@ -351,21 +409,30 @@ export function PendingLeavesWidget({ onOpen }: { onOpen?: () => void }) {
       </div>
       {loading ? <SkeletonRows rows={2} /> : (
         <div className="iv-dtiles iv-dtiles--auto">
-          <div className={`iv-dtile ${overview && overview.pending_count > 0 ? 'iv-dtile--amber' : 'iv-dtile--grey'}`}>
-            <span className="iv-dtile__value">{overview?.pending_count ?? 0}</span>
-            <span className="iv-dtile__label">Pending</span>
-          </div>
-          <div className={`iv-dtile ${overview && overview.cancellation_requested_count > 0 ? 'iv-dtile--amber' : 'iv-dtile--grey'}`}>
-            <span className="iv-dtile__value">{overview?.cancellation_requested_count ?? 0}</span>
-            <span className="iv-dtile__label">Cancellations</span>
-          </div>
-          <div className="iv-dtile iv-dtile--green">
-            <span className="iv-dtile__value">{overview?.on_leave_today ?? 0}</span>
-            <span className="iv-dtile__label">On leave today</span>
-          </div>
+          <button type="button" className="iv-dtile-btn" disabled={!onOpen}
+            title="Filter to pending" onClick={() => onOpen?.('pending')}>
+            <div className={`iv-dtile ${overview && overview.pending_count > 0 ? 'iv-dtile--amber' : 'iv-dtile--grey'}`}>
+              <span className="iv-dtile__value">{overview?.pending_count ?? 0}</span>
+              <span className="iv-dtile__label">Pending</span>
+            </div>
+          </button>
+          <button type="button" className="iv-dtile-btn" disabled={!onOpen}
+            title="Filter to cancellation requests" onClick={() => onOpen?.('cancellations')}>
+            <div className={`iv-dtile ${overview && overview.cancellation_requested_count > 0 ? 'iv-dtile--amber' : 'iv-dtile--grey'}`}>
+              <span className="iv-dtile__value">{overview?.cancellation_requested_count ?? 0}</span>
+              <span className="iv-dtile__label">Cancellations</span>
+            </div>
+          </button>
+          <button type="button" className="iv-dtile-btn" disabled={!onOpen}
+            title="Show who's on leave today" onClick={() => onOpen?.('on_leave')}>
+            <div className="iv-dtile iv-dtile--green">
+              <span className="iv-dtile__value">{overview?.on_leave_today ?? 0}</span>
+              <span className="iv-dtile__label">On leave today</span>
+            </div>
+          </button>
         </div>
       )}
-      {onOpen && <button className="iv-btn iv-dbtn" onClick={onOpen}>Open leaves</button>}
+      {onOpen && <button className="iv-btn iv-dbtn" onClick={() => onOpen()}>Open leaves</button>}
     </div>
   );
 }
@@ -378,20 +445,22 @@ export function OfficeDashboardSection({
   onReviewLeaves,
   onOpenTask,
   onOpenLeaves,
+  onSelectPerson,
 }: {
-  onOpenAttendance?: () => void;
-  onOpenTasks?: () => void;
+  onOpenAttendance?: (filter?: 'all' | 'working' | 'checked_out' | 'absent') => void;
+  onOpenTasks?: (filter?: TaskStatus | 'all') => void;
   onNewTask?: () => void;
-  onReviewLeaves?: () => void;
+  onReviewLeaves?: (filter?: 'pending' | 'cancellations' | 'on_leave') => void;
   onOpenTask?: (id: string) => void;
-  onOpenLeaves?: () => void;
+  onOpenLeaves?: (filter?: 'pending' | 'cancellations' | 'on_leave') => void;
+  onSelectPerson?: (userId: string, name: string) => void;
 }) {
   const { isManager } = useInnoVibe();
   return (
     <div className="iv-dash">
       <AttendanceSummaryWidget onOpen={onOpenAttendance} />
       <TaskSummaryWidget onOpen={onOpenTasks} onNewTask={onNewTask} />
-      <EmployeeStatusWidget />
+      <EmployeeStatusWidget onSelectPerson={onSelectPerson} />
       <PendingTasksWidget onOpenTask={onOpenTask} />
       <OverdueTasksWidget onOpenTask={onOpenTask} />
       {isManager && (

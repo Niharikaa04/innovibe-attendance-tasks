@@ -255,3 +255,22 @@
 /* Empty / skeleton states dropped into a iv-dcard need the same breathing
    room as the rest of the card body. */
 .iv-dcard .iv-emptystate, .iv-dcard .iv-skeleton { padding: 4px 0; }
+
+/* ------------------------------------------------- clickable dashboard -- */
+/* Wraps a .iv-dkpi or .iv-dtile as a button so clicking a number jumps to
+   (and, where the caller supports it, pre-filters) the matching page. */
+
+.iv-dkpi-btn, .iv-dtile-btn {
+  all: unset; display: block; width: 100%; min-width: 0; cursor: pointer; border-radius: var(--iv-r-lg);
+  transition: transform .14s ease, box-shadow .14s ease;
+}
+.iv-dtile-btn { border-radius: var(--iv-r); }
+.iv-dkpi-btn:hover, .iv-dtile-btn:hover { transform: translateY(-1px); box-shadow: var(--iv-shadow); }
+.iv-dkpi-btn:focus-visible, .iv-dtile-btn:focus-visible { outline: 2px solid var(--iv-brand); outline-offset: 2px; }
+.iv-dkpi-btn:disabled, .iv-dtile-btn:disabled { cursor: default; }
+.iv-dkpi-btn:disabled:hover, .iv-dtile-btn:disabled:hover { transform: none; box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .iv-dkpi-btn:hover, .iv-dtile-btn:hover { transform: none; } }
+
+.iv-dpeople li.is-clickable { cursor: pointer; border-radius: var(--iv-r-sm); transition: background .14s ease; }
+.iv-dpeople li.is-clickable:hover { background: var(--iv-surface-2); }
+.iv-dpeople li.is-clickable:focus-visible { outline: 2px solid var(--iv-brand); outline-offset: -2px; }
