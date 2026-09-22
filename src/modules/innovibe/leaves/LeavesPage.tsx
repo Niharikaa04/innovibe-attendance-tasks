@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Badge, Button, Card, ConfirmDialog, EmptyState, ErrorState, Field, LiveDot,
   Modal, SectionHead, SkeletonRows, StatTile,
@@ -230,6 +230,18 @@ function MyLeavesPanel() {
 }
 
 // ---------------------------------------------------------------------------
+// Briefly flashes a highlight ring on a section after it's scrolled to, so
+// clicking an overview tile has a visible landing effect, not just a jump.
+function scrollAndFlash(el: HTMLElement | null) {
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  el.classList.remove('iv-flash');
+  // Force reflow so the animation restarts if the same tile is clicked twice.
+  void el.offsetWidth;
+  el.classList.add('iv-flash');
+  window.setTimeout(() => el.classList.remove('iv-flash'), 1200);
+}
+
 function TeamLeavesPanel() {
   const nameOf = useNameOf();
   const { leaves, overview, loading, busy, error, realtime, reload, review, reviewCancellation } = useTeamLeaves();
@@ -239,6 +251,10 @@ function TeamLeavesPanel() {
   const [note, setNote] = useState('');
   const [detailsTarget, setDetailsTarget] = useState<LeaveRequest | null>(null);
   const toast = useToast();
+
+  const pendingCardRef = useRef<HTMLDivElement | null>(null);
+  const cancelCardRef = useRef<HTMLDivElement | null>(null);
+  const reviewedCardRef = useRef<HTMLDivElement | null>(null);
 
   const pending = leaves.filter((l) => l.status === 'pending');
   const cancelReqs = leaves.filter((l) => l.status === 'cancellation_requested');
@@ -256,14 +272,20 @@ function TeamLeavesPanel() {
         <SectionHead title="Team leave overview" actions={<LiveDot status={realtime} />} />
         {error && <ErrorState message={error} onRetry={reload} />}
         <div className="iv-statrow iv-statrow--4">
-          <StatTile label="Pending requests" value={overview?.pending_count ?? 0} tone={overview && overview.pending_count > 0 ? 'late' : 'neutral'} />
-          <StatTile label="Cancellation requests" value={overview?.cancellation_requested_count ?? 0} tone={overview && overview.cancellation_requested_count > 0 ? 'late' : 'neutral'} />
+          <button type="button" className="iv-stattile-btn" onClick={() => scrollAndFlash(pendingCardRef.current)}>
+            <StatTile label="Pending requests" value={overview?.pending_count ?? 0} tone={overview && overview.pending_count > 0 ? 'late' : 'neutral'} />
+          </button>
+          <button type="button" className="iv-stattile-btn" onClick={() => scrollAndFlash(cancelCardRef.current)}>
+            <StatTile label="Cancellation requests" value={overview?.cancellation_requested_count ?? 0} tone={overview && overview.cancellation_requested_count > 0 ? 'late' : 'neutral'} />
+          </button>
           <StatTile label="On leave today" value={overview?.on_leave_today ?? 0} tone="working" />
-          <StatTile label="Total requests" value={leaves.length} />
+          <button type="button" className="iv-stattile-btn" onClick={() => scrollAndFlash(reviewedCardRef.current)}>
+            <StatTile label="Total requests" value={leaves.length} />
+          </button>
         </div>
       </Card>
 
-      <Card>
+      <div ref={pendingCardRef}><Card>
         <SectionHead title="Awaiting your review" subtitle={`${pending.length} pending`} />
         {loading ? <SkeletonRows rows={3} /> : pending.length === 0 ? (
           <EmptyState title="Nothing to review" body="New leave requests will appear here." />
@@ -293,9 +315,9 @@ function TeamLeavesPanel() {
             </table>
           </div>
         )}
-      </Card>
+      </Card></div>
 
-      <Card>
+      <div ref={cancelCardRef}><Card>
         <SectionHead title="Cancellation requests" subtitle={`${cancelReqs.length} awaiting your review`} />
         {loading ? <SkeletonRows rows={2} /> : cancelReqs.length === 0 ? (
           <EmptyState title="No cancellation requests" body="Employees asking to cancel approved leave will appear here." />
@@ -324,9 +346,9 @@ function TeamLeavesPanel() {
             </table>
           </div>
         )}
-      </Card>
+      </Card></div>
 
-      <Card>
+      <div ref={reviewedCardRef}><Card>
         <SectionHead title="Reviewed requests" />
         {others.length === 0 ? (
           <EmptyState title="Nothing reviewed yet" />
@@ -351,7 +373,7 @@ function TeamLeavesPanel() {
             </table>
           </div>
         )}
-      </Card>
+      </Card></div>
 
       <Modal
         open={!!reviewing}

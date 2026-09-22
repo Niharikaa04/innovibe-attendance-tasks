@@ -725,6 +725,14 @@
 .iv-stattile-btn[aria-pressed="true"] .iv-stat__value { color: var(--iv-brand-ink); }
 @media (prefers-reduced-motion: reduce) { .iv-stattile-btn:hover .iv-stat { transform: none; } }
 
+/* Brief highlight ring for a section scrolled to from an overview tile. */
+.iv-flash { animation: iv-flash-ring 1.2s ease-out; border-radius: var(--iv-r); }
+@keyframes iv-flash-ring {
+  0%   { box-shadow: 0 0 0 3px var(--iv-brand); }
+  100% { box-shadow: 0 0 0 3px transparent; }
+}
+@media (prefers-reduced-motion: reduce) { .iv-flash { animation: none; } }
+
 /* ------------------------------------------------------- checkbox field -- */
 /* Used by the "Half day" toggle on the leave application form. Generic
    enough to reuse anywhere a labelled checkbox is needed. */
