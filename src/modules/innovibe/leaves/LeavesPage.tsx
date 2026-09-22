@@ -87,9 +87,11 @@ function MyLeavesPanel() {
   const [formOpen, setFormOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<LeaveRequest | null>(null);
   const [detailsTarget, setDetailsTarget] = useState<LeaveRequest | null>(null);
+  const [typeFilter, setTypeFilter] = useState<LeaveRequest['leave_type'] | null>(null);
   const toast = useToast();
 
   const confirmMode = confirmTarget ? cancellability(confirmTarget) : null;
+  const visibleLeaves = typeFilter ? leaves.filter((l) => l.leave_type === typeFilter) : leaves;
 
   return (
     <div className="iv-stack">
@@ -107,19 +109,27 @@ function MyLeavesPanel() {
         {balanceLoading ? <SkeletonRows rows={2} /> : (
           <div className="iv-statrow iv-statrow--4">
             {balance.map((b) => (
-              <StatTile
+              <button
                 key={b.leave_type}
-                label={LEAVE_TYPE_LABEL[b.leave_type]}
-                value={`${fmt(b.remaining)} available`}
-                hint={[
-                  `Allocated ${fmt(b.accrued_days)}`,
-                  `Used ${fmt(b.used_days)}`,
-                  `Pending ${fmt(b.pending_days)}`,
-                  `Carried forward ${fmt(b.carried_forward)}`,
-                  isLow(b) ? 'Low balance' : null,
-                ].filter(Boolean).join(' · ')}
-                tone={b.remaining <= 0 ? 'late' : isLow(b) ? 'late' : 'neutral'}
-              />
+                type="button"
+                className="iv-stattile-btn"
+                aria-pressed={typeFilter === b.leave_type}
+                title={`Filter your requests to ${LEAVE_TYPE_LABEL[b.leave_type]}`}
+                onClick={() => setTypeFilter((prev) => (prev === b.leave_type ? null : b.leave_type))}
+              >
+                <StatTile
+                  label={LEAVE_TYPE_LABEL[b.leave_type]}
+                  value={`${fmt(b.remaining)} available`}
+                  hint={[
+                    `Allocated ${fmt(b.accrued_days)}`,
+                    `Used ${fmt(b.used_days)}`,
+                    `Pending ${fmt(b.pending_days)}`,
+                    `Carried forward ${fmt(b.carried_forward)}`,
+                    isLow(b) ? 'Low balance' : null,
+                  ].filter(Boolean).join(' · ')}
+                  tone={b.remaining <= 0 ? 'late' : isLow(b) ? 'late' : 'neutral'}
+                />
+              </button>
             ))}
           </div>
         )}
@@ -128,14 +138,29 @@ function MyLeavesPanel() {
       <Card>
         <SectionHead
           title="Your requests"
-          subtitle={`${counts.pending} awaiting a decision · ${counts.approved} approved · ${counts.rejected} rejected`}
+          subtitle={
+            typeFilter
+              ? `Showing ${LEAVE_TYPE_LABEL[typeFilter].toLowerCase()} only · ${visibleLeaves.length} request(s)`
+              : `${counts.pending} awaiting a decision · ${counts.approved} approved · ${counts.rejected} rejected`
+          }
+          actions={typeFilter && (
+            <Button size="sm" onClick={() => setTypeFilter(null)}>Clear filter</Button>
+          )}
         />
         {error && <ErrorState message={error} onRetry={reload} />}
-        {loading ? <SkeletonRows rows={4} /> : leaves.length === 0 ? (
+        {loading ? <SkeletonRows rows={4} /> : visibleLeaves.length === 0 ? (
           <EmptyState
-            title="No leave requests yet"
-            body="Apply for leave and it will show up here, with live status updates."
-            action={<Button variant="primary" size="sm" onClick={() => setFormOpen(true)}>Apply for leave</Button>}
+            title={typeFilter ? `No ${LEAVE_TYPE_LABEL[typeFilter].toLowerCase()} requests` : 'No leave requests yet'}
+            body={
+              typeFilter
+                ? 'Nothing of this type yet. Clear the filter to see all your requests.'
+                : 'Apply for leave and it will show up here, with live status updates.'
+            }
+            action={
+              typeFilter
+                ? <Button size="sm" onClick={() => setTypeFilter(null)}>Clear filter</Button>
+                : <Button variant="primary" size="sm" onClick={() => setFormOpen(true)}>Apply for leave</Button>
+            }
           />
         ) : (
           <div className="iv-tablewrap">
@@ -144,7 +169,7 @@ function MyLeavesPanel() {
                 <tr><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Submitted</th><th>Note</th><th /></tr>
               </thead>
               <tbody>
-                {leaves.map((l) => {
+                {visibleLeaves.map((l) => {
                   const mode = cancellability(l);
                   return (
                     <tr key={l.id}>
