@@ -82,7 +82,7 @@ export function LeaveFormModal({
         </Field>
       </div>
 
-      <label className="iv-check" style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '4px 0 8px' }}>
+      <label className="iv-check">
         <input
           type="checkbox"
           checked={halfDay}

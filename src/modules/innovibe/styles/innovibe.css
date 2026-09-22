@@ -703,3 +703,33 @@
 }
 .iv-toast--success { background: var(--iv-working); color: #fff; }
 .iv-toast--error   { background: var(--iv-danger); color: #fff; }
+
+/* ------------------------------------------------- clickable stat tiles -- */
+/* Wraps an existing .iv-stat (StatTile) as a toggleable filter button, used
+   on the Tasks page's "All tasks / To do / In progress / Blocked /
+   Completed" row. Only new class names, so no other .iv-stat usage changes. */
+
+.iv-stattile-btn {
+  all: unset;
+  display: block;
+  cursor: pointer;
+  border-radius: var(--iv-r);
+}
+.iv-stattile-btn .iv-stat { transition: border-color .14s ease, background .14s ease, transform .14s ease; }
+.iv-stattile-btn:hover .iv-stat { border-color: var(--iv-line-strong); background: var(--iv-surface); transform: translateY(-1px); }
+.iv-stattile-btn:focus-visible { outline: 2px solid var(--iv-brand); outline-offset: 2px; }
+.iv-stattile-btn[aria-pressed="true"] .iv-stat {
+  background: var(--iv-brand-soft);
+  border-color: var(--iv-brand);
+}
+.iv-stattile-btn[aria-pressed="true"] .iv-stat__value { color: var(--iv-brand-ink); }
+@media (prefers-reduced-motion: reduce) { .iv-stattile-btn:hover .iv-stat { transform: none; } }
+
+/* ------------------------------------------------------- checkbox field -- */
+/* Used by the "Half day" toggle on the leave application form. Generic
+   enough to reuse anywhere a labelled checkbox is needed. */
+.iv-check {
+  display: flex; align-items: center; gap: 8px;
+  margin: 4px 0 8px; font-size: 14px; color: var(--iv-ink); cursor: pointer;
+}
+.iv-check input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--iv-brand); }

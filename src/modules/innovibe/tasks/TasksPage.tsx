@@ -124,30 +124,43 @@ export function TasksPage({
         </div>
       </div>
 
-      <div className="iv-statrow iv-statrow--5">
-        <StatTile
+      <div className="iv-statrow iv-statrow--5 iv-statrow--clickable">
+        <StatTileButton
           label={isManager ? 'All tasks' : 'My tasks'}
           value={counts.total}
+          active={t.filters.status === 'all'}
+          onClick={() => t.setFilters({ ...t.filters, status: 'all' })}
         />
 
-        <StatTile label="To do" value={counts.todo} />
+        <StatTileButton
+          label="To do"
+          value={counts.todo}
+          active={t.filters.status === 'todo'}
+          onClick={() => t.setFilters({ ...t.filters, status: 'todo' })}
+        />
 
-        <StatTile
+        <StatTileButton
           label="In progress"
           value={counts.in_progress}
           tone="working"
+          active={t.filters.status === 'in_progress'}
+          onClick={() => t.setFilters({ ...t.filters, status: 'in_progress' })}
         />
 
-        <StatTile
+        <StatTileButton
           label="Blocked"
           value={counts.blocked}
           tone="late"
+          active={t.filters.status === 'blocked'}
+          onClick={() => t.setFilters({ ...t.filters, status: 'blocked' })}
         />
 
-        <StatTile
+        <StatTileButton
           label="Completed"
           value={counts.completed}
           tone="good"
+          active={t.filters.status === 'completed'}
+          onClick={() => t.setFilters({ ...t.filters, status: 'completed' })}
         />
       </div>
 
@@ -453,6 +466,38 @@ export function TasksPage({
         }}
       />
     </div>
+  );
+}
+
+/**
+ * A StatTile rendered as a toggleable filter button. Reuses StatTile's own
+ * markup/classes (iv-stat, iv-stat--<tone>) so it looks identical to the
+ * existing tiles elsewhere in the app; only the interactive affordances
+ * (button semantics, active state, focus ring) are added here.
+ */
+function StatTileButton({
+  label,
+  value,
+  tone,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  tone?: 'working' | 'late' | 'good';
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="iv-stattile-btn"
+      aria-pressed={active}
+      onClick={onClick}
+      title={active ? `Showing: ${label}` : `Filter by ${label}`}
+    >
+      <StatTile label={label} value={value} tone={tone} />
+    </button>
   );
 }
 

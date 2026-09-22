@@ -6,6 +6,7 @@ import {
 import { useInnoVibe, useNameOf } from '../provider';
 import { useMyLeaves, useTeamLeaves, useLeaveBalance } from './hooks';
 import { LeaveFormModal } from './LeaveFormModal';
+import { LeaveDetailsModal } from './LeaveDetailsModal';
 import { readableError, useToast } from '../lib/toast';
 import { formatDay, todayISO } from '../lib/time';
 import { LEAVE_STATUS_LABEL, LEAVE_TYPE_LABEL } from '../types';
@@ -80,10 +81,12 @@ export function LeavesPage({
 // ---------------------------------------------------------------------------
 function MyLeavesPanel() {
   const { userId } = useInnoVibe();
+  const nameOf = useNameOf();
   const { leaves, counts, loading, busy, error, realtime, reload, apply, cancel } = useMyLeaves();
   const { rows: balance, loading: balanceLoading } = useLeaveBalance(userId);
   const [formOpen, setFormOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<LeaveRequest | null>(null);
+  const [detailsTarget, setDetailsTarget] = useState<LeaveRequest | null>(null);
   const toast = useToast();
 
   const confirmMode = confirmTarget ? cancellability(confirmTarget) : null;
@@ -152,12 +155,15 @@ function MyLeavesPanel() {
                       <td data-label="Submitted">{formatDay(l.created_at)}</td>
                       <td data-label="Note">{noteFor(l)}</td>
                       <td data-label="">
-                        {mode === 'withdraw' && (
-                          <Button size="sm" variant="danger" onClick={() => setConfirmTarget(l)}>Withdraw</Button>
-                        )}
-                        {mode === 'request-cancellation' && (
-                          <Button size="sm" variant="danger" onClick={() => setConfirmTarget(l)}>Request cancellation</Button>
-                        )}
+                        <div className="iv-toolbar">
+                          <Button size="sm" onClick={() => setDetailsTarget(l)}>Details</Button>
+                          {mode === 'withdraw' && (
+                            <Button size="sm" variant="danger" onClick={() => setConfirmTarget(l)}>Withdraw</Button>
+                          )}
+                          {mode === 'request-cancellation' && (
+                            <Button size="sm" variant="danger" onClick={() => setConfirmTarget(l)}>Request cancellation</Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -192,6 +198,8 @@ function MyLeavesPanel() {
           }
         }}
       />
+
+      <LeaveDetailsModal leave={detailsTarget} onClose={() => setDetailsTarget(null)} nameOf={nameOf} />
     </div>
   );
 }
@@ -204,6 +212,7 @@ function TeamLeavesPanel() {
     leave: LeaveRequest; decision: 'approved' | 'rejected'; kind: 'leave' | 'cancellation';
   } | null>(null);
   const [note, setNote] = useState('');
+  const [detailsTarget, setDetailsTarget] = useState<LeaveRequest | null>(null);
   const toast = useToast();
 
   const pending = leaves.filter((l) => l.status === 'pending');
@@ -250,6 +259,7 @@ function TeamLeavesPanel() {
                       <div className="iv-toolbar">
                         <Button size="sm" variant="primary" onClick={() => { setReviewing({ leave: l, decision: 'approved', kind: 'leave' }); setNote(''); }}>Approve</Button>
                         <Button size="sm" variant="danger" onClick={() => { setReviewing({ leave: l, decision: 'rejected', kind: 'leave' }); setNote(''); }}>Reject</Button>
+                        <Button size="sm" onClick={() => setDetailsTarget(l)}>View details</Button>
                       </div>
                     </td>
                   </tr>
@@ -280,6 +290,7 @@ function TeamLeavesPanel() {
                       <div className="iv-toolbar">
                         <Button size="sm" variant="primary" onClick={() => { setReviewing({ leave: l, decision: 'approved', kind: 'cancellation' }); setNote(''); }}>Approve</Button>
                         <Button size="sm" variant="danger" onClick={() => { setReviewing({ leave: l, decision: 'rejected', kind: 'cancellation' }); setNote(''); }}>Reject</Button>
+                        <Button size="sm" onClick={() => setDetailsTarget(l)}>View details</Button>
                       </div>
                     </td>
                   </tr>
@@ -297,7 +308,7 @@ function TeamLeavesPanel() {
         ) : (
           <div className="iv-tablewrap">
             <table className="iv-table">
-              <thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Status</th><th>Note</th></tr></thead>
+              <thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Status</th><th>Note</th><th /></tr></thead>
               <tbody>
                 {others.map((l) => (
                   <tr key={l.id}>
@@ -306,6 +317,9 @@ function TeamLeavesPanel() {
                     <td data-label="Dates">{formatDay(l.start_date)} – {formatDay(l.end_date)}</td>
                     <td data-label="Status"><Badge tone={STATUS_TONE[l.status]} dot>{LEAVE_STATUS_LABEL[l.status]}</Badge></td>
                     <td data-label="Note">{noteFor(l)}</td>
+                    <td data-label="">
+                      <Button size="sm" onClick={() => setDetailsTarget(l)}>View details</Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -372,6 +386,13 @@ function TeamLeavesPanel() {
           </>
         )}
       </Modal>
+
+      <LeaveDetailsModal
+        leave={detailsTarget}
+        onClose={() => setDetailsTarget(null)}
+        nameOf={nameOf}
+        employeeName={detailsTarget ? nameOf(detailsTarget.user_id) : undefined}
+      />
     </div>
   );
 }
