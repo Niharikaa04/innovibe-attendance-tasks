@@ -749,12 +749,29 @@ function SetNewPassword({
 
 // ---------------------------------------------------------------------------
 
+// Looks up the Auth email registered for a User ID. Used only in memory to
+// call signInWithPassword / resetPasswordForEmail below — never rendered.
+async function findAuthEmailForUserId(
+  userId: string,
+): Promise<string | null> {
+  const { data, error } = await supabase.rpc(
+    'get_auth_email_for_employee_id',
+    { p_employee_id: userId },
+  );
+
+  if (error) return null;
+  return (data as string | null) ?? null;
+}
+
+const GENERIC_LOGIN_ERROR =
+  'Incorrect User ID or password. Please try again.';
+
 function SignIn({
   onSignedIn,
 }: {
   onSignedIn: (s: Session) => void;
 }) {
-  const [email, setEmail] = useState('');
+  const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -767,21 +784,24 @@ function SignIn({
     setBusy(true);
     setError(null);
 
+    const authEmail = await findAuthEmailForUserId(userId);
+
+    if (!authEmail) {
+      setBusy(false);
+      setError(GENERIC_LOGIN_ERROR);
+      return;
+    }
+
     const { data, error: err } =
       await supabase.auth.signInWithPassword({
-        email,
+        email: authEmail,
         password,
       });
 
     setBusy(false);
 
     if (err) {
-      setError(
-        err.message.toLowerCase().includes('invalid login')
-          ? 'Incorrect email or password. Please try again.'
-          : err.message,
-      );
-
+      setError(GENERIC_LOGIN_ERROR);
       return;
     }
 
@@ -791,24 +811,26 @@ function SignIn({
   };
 
   const forgotPassword = async () => {
-    if (!email) {
+    if (!userId) {
       setError(
-        'Enter your email above first, then tap "Forgot password?".',
+        'Enter your User ID above first, then tap "Forgot password?".',
       );
 
       return;
     }
 
     setError(null);
+    setBusy(true);
 
-    const { error: err } =
-      await supabase.auth.resetPasswordForEmail(email);
+    const authEmail = await findAuthEmailForUserId(userId);
 
-    if (err) {
-      setError(err.message);
-      return;
+    if (authEmail) {
+      await supabase.auth.resetPasswordForEmail(authEmail);
     }
 
+    setBusy(false);
+    // Same message whether or not the User ID exists, so the response
+    // never reveals which User IDs are registered.
     setResetSent(true);
   };
 
@@ -839,20 +861,21 @@ function SignIn({
 
         {resetSent && (
           <div className="iv-notice-inline">
-            Password reset link sent to{' '}
-            <strong>{email}</strong>. Check your inbox.
+            If the account exists, a password reset link
+            has been sent to the registered email address.
           </div>
         )}
 
         <label>
-          Email
+          User ID
 
           <input
             className="iv-input"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@innovibe.com"
+            type="text"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            placeholder="Enter your User ID"
+            autoComplete="username"
             required
             autoFocus
           />
