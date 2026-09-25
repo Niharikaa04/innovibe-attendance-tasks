@@ -380,12 +380,20 @@ function OfficeShell({
                 aria-haspopup="menu"
                 aria-expanded={profileMenuOpen}
               >
-                <span
-                  className="iv-userchip"
-                  aria-hidden="true"
-                >
-                  {initials || '?'}
-                </span>
+                {profile?.avatar_url ? (
+                  <img
+                    className="iv-userchip iv-userchip--image"
+                    src={profile.avatar_url}
+                    alt=""
+                  />
+                ) : (
+                  <span
+                    className="iv-userchip"
+                    aria-hidden="true"
+                  >
+                    {initials || '?'}
+                  </span>
+                )}
 
                 <span className="iv-profilebtn__text">
                   <strong>
