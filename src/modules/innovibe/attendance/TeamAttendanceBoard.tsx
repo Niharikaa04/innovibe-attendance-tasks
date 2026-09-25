@@ -9,8 +9,12 @@ import { ATTENDANCE_LABEL } from '../types';
 import type { AttendanceStatus } from '../types';
 
 const TONE: Record<string, string> = {
-  working: 'working', checked_out: 'out', not_checked_in: 'absent',
-  absent: 'absent', on_leave: 'neutral',
+  working: 'working',
+  checked_out: 'out',
+  missing_checkout: 'late',
+  not_checked_in: 'absent',
+  absent: 'absent',
+  on_leave: 'neutral',
 };
 
 type StatusFilter = AttendanceStatus | 'all' | 'late';
@@ -97,7 +101,7 @@ export function TeamAttendanceBoard({
         <div className="iv-filters">
           <Search value={query} onChange={setQuery} placeholder="Search a team member" />
           <div className="iv-segmented" role="group" aria-label="Filter by status">
-            {(['all', 'working', 'checked_out', 'not_checked_in', 'late'] as StatusFilter[]).map((s) => (
+            {(['all', 'working', 'checked_out', 'missing_checkout', 'not_checked_in', 'late'] as StatusFilter[]).map((s) => (
               <button
                 key={s}
                 className={`iv-segmented__btn ${statusFilter === s ? 'is-active' : ''}`}

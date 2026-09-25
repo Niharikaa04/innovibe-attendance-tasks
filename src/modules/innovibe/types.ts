@@ -2,7 +2,14 @@
 // InnoVibe Attendance & Tasks — shared types
 // ---------------------------------------------------------------------------
 
-export type Role = 'ceo' | 'admin' | 'manager' | 'hr' | 'lead' | 'employee' | 'intern';
+export type Role =
+  | 'ceo'
+  | 'admin'
+  | 'manager'
+  | 'hr'
+  | 'lead'
+  | 'employee'
+  | 'intern';
 
 export const MANAGER_ROLES: Role[] = ['ceo', 'admin', 'manager', 'hr', 'lead'];
 
@@ -20,8 +27,18 @@ export type AttendanceStatus =
   | 'not_checked_in'
   | 'working'
   | 'checked_out'
+  | 'missing_checkout'
   | 'absent'
   | 'on_leave';
+
+export const ATTENDANCE_LABEL: Record<AttendanceStatus, string> = {
+  not_checked_in: 'Not checked in',
+  working: 'Working',
+  checked_out: 'Checked out',
+  missing_checkout: 'Missing checkout',
+  absent: 'Absent',
+  on_leave: 'On leave',
+};
 
 export interface AttendanceRecord {
   id: string;
@@ -73,10 +90,26 @@ export interface WorkSettings {
 // ---------------------------------- Tasks ----------------------------------
 
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
-export type TaskStatus = 'todo' | 'in_progress' | 'blocked' | 'completed';
 
-export const TASK_STATUSES: TaskStatus[] = ['todo', 'in_progress', 'blocked', 'completed'];
-export const TASK_PRIORITIES: TaskPriority[] = ['low', 'medium', 'high', 'urgent'];
+export type TaskStatus =
+  | 'todo'
+  | 'in_progress'
+  | 'blocked'
+  | 'completed';
+
+export const TASK_STATUSES: TaskStatus[] = [
+  'todo',
+  'in_progress',
+  'blocked',
+  'completed',
+];
+
+export const TASK_PRIORITIES: TaskPriority[] = [
+  'low',
+  'medium',
+  'high',
+  'urgent',
+];
 
 export const STATUS_LABEL: Record<TaskStatus, string> = {
   todo: 'To do',
@@ -92,14 +125,6 @@ export const PRIORITY_LABEL: Record<TaskPriority, string> = {
   urgent: 'Urgent',
 };
 
-export const ATTENDANCE_LABEL: Record<AttendanceStatus, string> = {
-  not_checked_in: 'Not checked in',
-  working: 'Working',
-  checked_out: 'Checked out',
-  absent: 'Absent',
-  on_leave: 'On leave',
-};
-
 export interface Task {
   id: string;
   title: string;
@@ -108,13 +133,21 @@ export interface Task {
   created_by: string;
   priority: TaskPriority;
   status: TaskStatus;
-  due_date: string | null;    // YYYY-MM-DD
+  due_date: string | null;
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+
   // joined, optional
-  assignee?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null;
-  creator?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null;
+  assignee?: Pick<
+    Profile,
+    'id' | 'full_name' | 'avatar_url'
+  > | null;
+
+  creator?: Pick<
+    Profile,
+    'id' | 'full_name' | 'avatar_url'
+  > | null;
 }
 
 export interface TaskInput {
@@ -127,12 +160,11 @@ export interface TaskInput {
 }
 
 /**
- * Used only when creating a task: carries one or more employee ids. The
- * database still stores one row per assignee (a "task for 3 people" is 3
- * independently trackable tasks, each with its own status) — this type
- * exists so the create flow can submit them together from one form.
+ * Used only when creating a task: carries one or more employee ids.
+ * The database still stores one row per assignee.
  */
-export interface TaskCreateInput extends Omit<TaskInput, 'assigned_to'> {
+export interface TaskCreateInput
+  extends Omit<TaskInput, 'assigned_to'> {
   assignees: string[];
 }
 
@@ -143,7 +175,11 @@ export interface TaskComment {
   content: string;
   created_at: string;
   updated_at: string;
-  author?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null;
+
+  author?: Pick<
+    Profile,
+    'id' | 'full_name' | 'avatar_url'
+  > | null;
 }
 
 export type ActivityAction =
@@ -163,7 +199,11 @@ export interface TaskActivity {
   action: ActivityAction;
   metadata: Record<string, unknown>;
   created_at: string;
-  actor?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null;
+
+  actor?: Pick<
+    Profile,
+    'id' | 'full_name' | 'avatar_url'
+  > | null;
 }
 
 export interface TaskOverview {
@@ -199,13 +239,27 @@ export interface AppNotification {
   created_at: string;
 }
 
-// ---------------------------------------- Leaves ----------------------------------------
+// ---------------------------------- Leaves ----------------------------------
 
-export type LeaveType = 'sick' | 'casual' | 'earned' | 'unpaid';
+export type LeaveType =
+  | 'sick'
+  | 'casual'
+  | 'earned'
+  | 'unpaid';
+
 export type LeaveStatus =
-  | 'pending' | 'approved' | 'rejected' | 'cancellation_requested' | 'cancelled';
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'cancellation_requested'
+  | 'cancelled';
 
-export const LEAVE_TYPES: LeaveType[] = ['sick', 'casual', 'earned', 'unpaid'];
+export const LEAVE_TYPES: LeaveType[] = [
+  'sick',
+  'casual',
+  'earned',
+  'unpaid',
+];
 
 export const LEAVE_TYPE_LABEL: Record<LeaveType, string> = {
   sick: 'Sick leave',
@@ -226,8 +280,8 @@ export interface LeaveRequest {
   id: string;
   user_id: string;
   leave_type: LeaveType;
-  start_date: string;   // YYYY-MM-DD
-  end_date: string;     // YYYY-MM-DD
+  start_date: string;
+  end_date: string;
   days: number;
   is_half_day: boolean;
   reason: string | null;
