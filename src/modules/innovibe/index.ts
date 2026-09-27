@@ -47,6 +47,12 @@ export {
 } from './leaves/hooks';
 export { leavesApi } from './leaves/api';
 
+// Employees
+export { EmployeeDirectoryPage } from './employees/EmployeeDirectoryPage';
+export { AddEmployeeForm } from './employees/AddEmployeeForm';
+export { useEmployeeDirectory, useCreateEmployee } from './employees/hooks';
+export { employeesApi } from './employees/api';
+
 // Office Dashboard widgets
 export {
   OfficeDashboardSection,

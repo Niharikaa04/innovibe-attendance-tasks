@@ -13,12 +13,42 @@ export type Role =
 
 export const MANAGER_ROLES: Role[] = ['ceo', 'admin', 'manager', 'hr', 'lead'];
 
+/** Roles authorized to open Employees / create new employees — same set as MANAGER_ROLES. */
+export const EMPLOYEE_MANAGEMENT_ROLES: Role[] = MANAGER_ROLES;
+
+/** Roles the Add Employee form may assign. CEO/Admin are deliberately excluded — see the edge function. */
+export const CREATABLE_ROLES: Role[] = ['employee', 'intern', 'lead', 'hr', 'manager'];
+
+export type AccountStatus = 'active' | 'disabled';
+
 export interface Profile {
   id: string;
   full_name: string | null;
   avatar_url?: string | null;
   email?: string | null;
   role: Role;
+  employee_id?: string | null;
+  status?: AccountStatus;
+  created_at?: string;
+}
+
+// ------------------------------- Employees ----------------------------------
+
+export interface EmployeeCreateInput {
+  full_name: string;
+  employee_id: string;
+  email: string;
+  role: Role;
+  password: string;
+}
+
+export interface EmployeeCreateResult {
+  id: string;
+  full_name: string;
+  employee_id: string;
+  email: string;
+  role: Role;
+  status: AccountStatus;
 }
 
 // ------------------------------- Attendance --------------------------------

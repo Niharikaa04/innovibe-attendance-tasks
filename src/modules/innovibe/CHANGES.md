@@ -1,5 +1,53 @@
 # What changed
 
+## Employee Management (new — `employees/`, `supabase/functions/create-employee/`, `supabase/migrations/0016_employee_management.sql`)
+
+Adds a self-service "Employees" section for CEO / Admin / Manager / HR / Lead, so
+new hires no longer need to be created by hand in the Supabase dashboard.
+
+**Database (`0016_employee_management.sql`, additive only):**
+- Adds two nullable/defaulted columns to the existing `public.profiles` table:
+  `email` (unique, case-insensitive) and `status` (`'active' | 'disabled'`, defaults
+  to `'active'`). Backfills `email` for existing rows from `auth.users`.
+- Everything else the feature needs — `employee_id` uniqueness, the role column,
+  `iv_is_manager()` / `iv_is_admin()`, and the "only an admin can change role"
+  trigger — already existed (migrations 0001, 0007, 0010, 0015) and is untouched.
+
+**Backend (`supabase/functions/create-employee/index.ts`):**
+- A new Supabase Edge Function, the only place that ever touches the
+  `service_role` key. Verifies the caller's Supabase Auth token, re-reads
+  *their* role from `public.profiles` (never trusts a role sent from the
+  browser), validates every field, checks User ID / email uniqueness, creates
+  a confirmed `auth.users` account, and upserts the matching `profiles` row.
+  If the profile write fails after the Auth account was created, it deletes
+  that Auth account so no orphan is left behind. CEO/Admin can never be
+  assigned through this endpoint — only Employee / Intern / Lead / HR / Manager.
+- Returns a safe, specific JSON error (`"User ID already exists."`, `"Email is
+  already registered."`, `"You are not authorized to create employees."`,
+  etc.) instead of a generic non-2xx status.
+
+**Frontend:**
+- `employees/api.ts`, `employees/hooks.ts` (`useEmployeeDirectory`,
+  `useCreateEmployee`), `employees/EmployeeDirectoryPage.tsx` (search + role/status
+  filters + table), `employees/AddEmployeeForm.tsx` (full form incl. Generate
+  Password) — all follow the same shape as the existing `leaves/` module.
+- `types.ts`: `Profile` gains `employee_id` / `email` / `status`; added
+  `EMPLOYEE_MANAGEMENT_ROLES` (an alias of the existing `MANAGER_ROLES`, so no
+  new role concept was introduced) and `CREATABLE_ROLES`.
+- `App.tsx`: new "Employees" sidebar group (Employee Directory, Add Employee),
+  gated on the existing `isManager` flag — exactly CEO/Admin/Manager/HR/Lead,
+  the same set already used to show Team Attendance/Tasks/Leaves.
+- Existing login, forgot-password, dashboard, attendance, tasks, leaves,
+  notifications, settings, RLS policies and role logic are all unchanged.
+
+**To deploy:**
+1. Run `supabase/migrations/0016_employee_management.sql` in the SQL Editor.
+2. `supabase functions deploy create-employee` (no manual env vars needed —
+   `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are provided automatically).
+3. Sign in as an existing CEO/Admin/Manager/HR/Lead account and use
+   Employees → Add Employee.
+
+
 ## Dashboard (`dashboard/DashboardWidgets.tsx`, `dashboard/dashboard.css`)
 
 **Root cause found:** `dashboard.css` already contained a full, spacious "professional

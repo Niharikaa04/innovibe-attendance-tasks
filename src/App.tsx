@@ -14,6 +14,8 @@ import {
   OfficeDashboardSection,
   DashboardKpiRow,
   LeavesPage,
+  EmployeeDirectoryPage,
+  AddEmployeeForm,
   IvIcon,
   useInnoVibe,
 } from './modules/innovibe';
@@ -42,6 +44,8 @@ type Page =
   | 'team-tasks'
   | 'my-leaves'
   | 'team-leaves'
+  | 'employees'
+  | 'add-employee'
   | 'notifications'
   | 'settings';
 
@@ -53,6 +57,8 @@ const PAGE_TITLE: Record<Page, string> = {
   'team-tasks': 'Team Tasks',
   'my-leaves': 'My Leaves',
   'team-leaves': 'Team Leaves',
+  employees: 'Employee Directory',
+  'add-employee': 'Add Employee',
   notifications: 'Notifications',
   settings: 'Settings',
 };
@@ -297,6 +303,26 @@ function OfficeShell({
           )}
         </nav>
 
+        {isManager && (
+          <nav className="iv-navgroup" aria-label="Employees">
+            <span className="iv-navgroup__label">Employees</span>
+
+            <NavItem
+              icon="users"
+              label="Employee Directory"
+              active={page === 'employees'}
+              onClick={() => goTo('employees')}
+            />
+
+            <NavItem
+              icon="plus-circle"
+              label="Add Employee"
+              active={page === 'add-employee'}
+              onClick={() => goTo('add-employee')}
+            />
+          </nav>
+        )}
+
         <nav className="iv-navgroup" aria-label="Communication">
           <span className="iv-navgroup__label">
             Communication
@@ -505,6 +531,20 @@ function OfficeShell({
             <LeavesPage
               key="team-leaves"
               initialTab="team"
+            />
+          )}
+
+          {page === 'employees' && isManager && (
+            <EmployeeDirectoryPage
+              key="employees"
+              onAddEmployee={() => goTo('add-employee')}
+            />
+          )}
+
+          {page === 'add-employee' && isManager && (
+            <AddEmployeeForm
+              key="add-employee"
+              onViewDirectory={() => goTo('employees')}
             />
           )}
 
