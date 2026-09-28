@@ -18,6 +18,7 @@ import {
   AddEmployeeForm,
   IvIcon,
   useInnoVibe,
+  useMyAttendance,
 } from './modules/innovibe';
 import type { IvIconName } from './modules/innovibe';
 
@@ -183,7 +184,7 @@ function OfficeShell({
   }, [sidebarOpen]);
 
   const fullName = profile?.full_name ?? '';
-  const firstName = fullName.trim().split(/\s+/)[0] ?? '';
+ 
 
   const initials = (fullName || '?')
     .split(' ')
@@ -470,7 +471,7 @@ function OfficeShell({
         <div className="iv-content">
           {page === 'dashboard' && (
             <DashboardHome
-              firstName={firstName}
+              fullName={fullName}
               onOpenTasks={() =>
                 goTo(
                   isManager ? 'team-tasks' : 'my-tasks',
@@ -600,24 +601,31 @@ function NavItem({
   );
 }
 
-// ---------------------------------------------------------------------------
-
 function DashboardHome({
-  firstName,
+  fullName,
   onOpenTasks,
   onNewTask,
   onOpenAttendance,
   onOpenLeaves,
   onReviewLeaves,
 }: {
-  firstName: string;
+  fullName: string;
   onOpenTasks: () => void;
   onNewTask: () => void;
   onOpenLeaves: () => void;
   onReviewLeaves?: () => void;
   onOpenAttendance: () => void;
-
 }) {
+  const {
+    record,
+    busy,
+    error: attendanceError,
+    checkIn,
+    checkOut,
+  } = useMyAttendance();
+
+  const { supabase } = useInnoVibe();
+
   // Keep the date card correct if the tab stays open past midnight.
   const [now, setNow] = useState(() => new Date());
 
@@ -629,6 +637,102 @@ function DashboardHome({
 
     return () => window.clearInterval(id);
   }, []);
+
+  // -------------------------------------------------------------------------
+  // Check In
+  // -------------------------------------------------------------------------
+const handleCheckIn = async () => {
+  try {
+    const attendance = await checkIn();
+
+    const checkInTime = attendance.check_in
+      ? new Date(attendance.check_in).toLocaleTimeString([], {
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      : 'now';
+
+    // Employee's own notification
+    const { error: selfError } = await supabase.rpc('iv_notify_self', {
+      p_type: 'attendance_check_in',
+      p_title: 'Check In Successful',
+      p_body: `You checked in at ${checkInTime}.`,
+      p_link: null,
+      p_data: {
+        attendance_id: attendance.id,
+        action: 'check_in',
+      },
+    });
+
+    if (selfError) {
+      console.error('Self check-in notification error:', selfError);
+    }
+
+    // CEO notification
+    const { error: ceoError } = await supabase.rpc(
+      'iv_notify_ceo_attendance',
+      {
+        p_attendance_id: attendance.id,
+        p_action: 'check_in',
+        p_time: attendance.check_in,
+      },
+    );
+
+    if (ceoError) {
+      console.error('CEO check-in notification error:', ceoError);
+    }
+  } catch (error) {
+    console.error('Check in error:', error);
+  }
+};
+
+  // -------------------------------------------------------------------------
+  // Check Out
+  // -------------------------------------------------------------------------
+const handleCheckOut = async () => {
+  try {
+    const attendance = await checkOut();
+
+    const checkOutTime = attendance.check_out
+      ? new Date(attendance.check_out).toLocaleTimeString([], {
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      : 'now';
+
+    // Employee's own notification
+    const { error: selfError } = await supabase.rpc('iv_notify_self', {
+      p_type: 'attendance_check_out',
+      p_title: 'Check Out Successful',
+      p_body: `You checked out at ${checkOutTime}.`,
+      p_link: null,
+      p_data: {
+        attendance_id: attendance.id,
+        action: 'check_out',
+      },
+    });
+
+    if (selfError) {
+      console.error('Self check-out notification error:', selfError);
+    }
+
+    // CEO notification
+    const { error: ceoError } = await supabase.rpc(
+      'iv_notify_ceo_attendance',
+      {
+        p_attendance_id: attendance.id,
+        p_action: 'check_out',
+        p_time: attendance.check_out,
+      },
+    );
+
+    if (ceoError) {
+      console.error('CEO check-out notification error:', ceoError);
+    }
+  } catch (error) {
+    console.error('Check out error:', error);
+  }
+};
 
   const weekday = now.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -643,14 +747,13 @@ function DashboardHome({
       <div className="iv-welcome">
         <div className="iv-welcome__text">
           <h1 className="iv-welcome__title">
-            {firstName
-              ? `Welcome back, ${firstName}!`
+            {fullName
+              ? `Welcome back, ${fullName}!`
               : 'Welcome back!'}
           </h1>
 
           <p className="iv-welcome__sub">
-            Here's what's happening across InnoVibe
-            Office today.
+            Here's what's happening across InnoVibe Office today.
           </p>
         </div>
 
@@ -673,6 +776,49 @@ function DashboardHome({
           </div>
         </div>
       </div>
+
+      {/* Check In / Check Out */}
+      <div className="iv-qagrid">
+        {!record ? (
+          <button
+            type="button"
+            className="iv-qa iv-qa--green"
+            onClick={() => void handleCheckIn()}
+            disabled={busy}
+          >
+            <span aria-hidden="true">🟢</span>
+            <span>
+              {busy ? 'Checking in…' : 'Check In'}
+            </span>
+          </button>
+        ) : record.status === 'working' ? (
+          <button
+            type="button"
+            className="iv-qa iv-qa--blue"
+            onClick={() => void handleCheckOut()}
+            disabled={busy}
+          >
+            <span aria-hidden="true">🔴</span>
+            <span>
+              {busy ? 'Checking out…' : 'Check Out'}
+            </span>
+          </button>
+        ) : (
+          <div
+            className="iv-qa iv-qa--grey"
+            aria-live="polite"
+          >
+            <span aria-hidden="true">✅</span>
+            <span>Checked Out</span>
+          </div>
+        )}
+      </div>
+
+      {attendanceError && (
+        <div className="iv-error" role="alert">
+          <p>{attendanceError}</p>
+        </div>
+      )}
 
       <DashboardKpiRow />
 

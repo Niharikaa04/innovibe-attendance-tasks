@@ -45,18 +45,25 @@ export function useMyAttendance() {
     },
   );
 
-  const run = async (fn: () => Promise<AttendanceRecord>) => {
-    setBusy(true);
-    try {
-      setRecord(await fn());
-      setError(null);
-    } catch (e) {
-      setError(readableError(e));
-      throw e;
-    } finally {
-      setBusy(false);
-    }
-  };
+const run = async (
+  fn: () => Promise<AttendanceRecord>,
+): Promise<AttendanceRecord> => {
+  setBusy(true);
+
+  try {
+    const updatedRecord = await fn();
+
+    setRecord(updatedRecord);
+    setError(null);
+
+    return updatedRecord;
+  } catch (e) {
+    setError(readableError(e));
+    throw e;
+  } finally {
+    setBusy(false);
+  }
+};
 
   return {
     record,

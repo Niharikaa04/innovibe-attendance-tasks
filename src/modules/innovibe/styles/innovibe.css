@@ -640,6 +640,42 @@
   border-radius: var(--iv-r-lg); box-shadow: var(--iv-shadow); z-index: 800;
   display: flex; flex-direction: column; max-height: 420px;
 }
+/* Mobile notification panel — keep it inside the phone viewport */
+@media (max-width: 600px) {
+  .iv-bell__panel {
+    position: fixed;
+    top: 82px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: none;
+    max-height: calc(100dvh - 96px);
+    border-radius: 16px;
+    z-index: 2000;
+    overflow: hidden;
+  }
+
+  .iv-bell__panel header {
+    flex: none;
+  }
+
+  .iv-bell__list {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .iv-notice {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .iv-notice__title,
+  .iv-notice__body {
+    overflow-wrap: anywhere;
+  }
+}
 .iv-bell__panel header {
   display: flex; justify-content: space-between; align-items: center;
   padding: 12px 14px; border-bottom: 1px solid var(--iv-line);
